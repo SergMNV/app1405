@@ -15,10 +15,10 @@ class Router
         $matching = $this->matching($requestMethod, $requestUri);
 
         if ($matching) {
-            call_user_func($matching->handler());
-            
+            return call_user_func($matching->handler());
         } else {
-            include __DIR__ . '../../resources/views/includes/404.php';
+            return $this->dispatchNotFound();
+            //include __DIR__ . '../../resources/views/includes/404.php';
         }
 
         exit;
@@ -47,5 +47,23 @@ class Router
         }
 
         return null;
+    }
+
+    private function dispatchNotFound()
+    {
+        $this->errorHandlers[404] ??= fn() => 'error 404 page not found';
+        return $this->errorHandlers[404]();
+    }
+
+    private function dispatchNotAllowed()
+    {
+        $this->errorHandlers[400] ??= fn() => 'error 400 not allowed';
+        return $this->errorHandlers[400]();
+    }
+
+    private function dispatchServerError()
+    {
+        $this->errorHandlers[500] ??= fn() => 'error 500 server error';
+        return $this->errorHandlers[500]();
     }
 }
