@@ -9,5 +9,5 @@ include_once 'test_url.php';
 $router = new Framework\Routing\Router();
 $routes($router);
 
-print $router->dispatch();
+$router->dispatch();
 die;
