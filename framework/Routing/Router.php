@@ -2,26 +2,38 @@
 
 namespace Framework\Routing;
 
+use Exception;
+
 class Router
 {
-    public array $routes = [];
-    public array $errorHandlers = [];
+    private array $routes = [];
+    private array $errorHandlers = [];
+    protected Route $current;
 
     public function dispatch()
     {
         $requestUri = $_SERVER['REQUEST_URI'];
         $requestMethod = $_SERVER['REQUEST_METHOD'];
 
+        $paths = $this->paths();
+
         $matching = $this->matching($requestMethod, $requestUri);
 
         if ($matching) {
-            return call_user_func($matching->handler());
-        } else {
-            return $this->dispatchNotFound();
-            //include __DIR__ . '../../resources/views/includes/404.php';
+            $this->current = $matching;
+
+            try {
+                return $matching->dispatch();
+            } catch (Exception $e) {
+                return $this->dispatchServerError();
+            }
         }
 
-        exit;
+        if (in_array($requestUri, $paths)) {
+            return $this->dispatchNotAllowed();
+        }
+
+        return $this->dispatchNotFound();
     }
 
     public function setErrorHandler(string $alias, mixed $handler): void
@@ -35,18 +47,35 @@ class Router
         return $this;
     }
 
+    public function redirect(string $path): void
+    {
+        header("Localhost: /{$path}");
+        exit;
+    }
+
     private function matching(string $method, string $uri): ?Route
     {
         foreach ($this->routes as $route) {
             /**
              * @var Route $route
              */
-            if ($route->method() === $method && $route->path() == $uri) {
+            if ($route->matches($method, $uri)) {
                 return $route;
             }
         }
 
         return null;
+    }
+
+    private function paths(): array
+    {
+        $paths = [];
+
+        foreach ($this->routes as $route) {
+            $paths[] = $route->path();
+        }
+
+        return $paths;
     }
 
     private function dispatchNotFound()

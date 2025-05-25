@@ -5,10 +5,22 @@ namespace Framework\Routing;
 class Route
 {
     public function __construct(
-        public string $method,
-        public string $path,
-        public mixed $handler,
+        protected string $method,
+        protected string $path,
+        protected mixed $handler,
     ) {}
+
+    public function matches($method, $path): bool
+    {
+        if (
+            $method === $this->method &&
+            $path === $this->path
+        ) {
+            return true;
+        }
+
+        return false;
+    }
 
     public function method(): string
     {
@@ -20,8 +32,8 @@ class Route
         return $this->path;
     }
 
-    public function handler(): mixed
+    public function dispatch(): mixed
     {
-        return $this->handler;
+        return call_user_func($this->handler);
     }
 }
